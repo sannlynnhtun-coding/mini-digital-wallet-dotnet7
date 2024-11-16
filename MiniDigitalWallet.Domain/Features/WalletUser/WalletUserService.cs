@@ -111,6 +111,55 @@ public class WalletUserService
         return await PaginationModel<TblTransaction>.CreateAsync(transactions.AsNoTracking(), pageNo, pageSize);
     }
 
+    public async Task WithdrawAsync(int userId, decimal amount)
+    {
+        var user = await _db.TblWalletUsers.FirstOrDefaultAsync(u => u.UserId == userId);
+        if (user == null)
+        {
+            throw new ArgumentException("User not found.");
+        }
+
+        if (user.Balance < amount)
+        {
+            throw new ArgumentException("Insufficient balance.");
+        }
+
+        user.Balance -= amount;
+
+        var transaction = new TblTransaction
+        {
+            SenderUserId = userId,
+            Amount = amount,
+            TransactionDate = DateTime.Now,
+            TransactionType = "Withdraw"
+        };
+
+        _db.TblTransactions.Add(transaction);
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task DepositAsync(int userId, decimal amount)
+    {
+        var user = await _db.TblWalletUsers.FirstOrDefaultAsync(u => u.UserId == userId);
+        if (user == null)
+        {
+            throw new ArgumentException("User not found.");
+        }
+
+        user.Balance += amount;
+
+        var transaction = new TblTransaction
+        {
+            ReceiverUserId = userId,
+            Amount = amount,
+            TransactionDate = DateTime.Now,
+            TransactionType = "Deposit"
+        };
+
+        _db.TblTransactions.Add(transaction);
+        await _db.SaveChangesAsync();
+    }
+
     private void ValidateUser(TblWalletUser user)
     {
         if (string.IsNullOrWhiteSpace(user.MobileNumber))

@@ -98,4 +98,33 @@ public class WalletUsersController : ControllerBase
         var transactions = await _service.GetTransactionHistoryAsync(userId, pageNo, pageSize);
         return Ok(transactions);
     }
+
+    [HttpPost("Withdraw")]
+    public async Task<IActionResult> Withdraw([FromBody] TransactionRequestModel requestModel)
+    {
+        try
+        {
+            await _service.WithdrawAsync(requestModel.UserId, requestModel.Amount);
+            return NoContent();
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpPost("Deposit")]
+    public async Task<IActionResult> Deposit([FromBody] TransactionRequestModel requestModelrequest)
+    {
+        try
+        {
+            await _service.DepositAsync(requestModelrequest.UserId, requestModelrequest.Amount);
+            return NoContent();
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
 }
