@@ -17,7 +17,6 @@ public class WalletUserService
 
     public async Task<TblWalletUser> RegisterAsync(TblWalletUser newUser)
     {
-        // Validate the new user
         ValidateUser(newUser);
 
         _db.TblWalletUsers.Add(newUser);
@@ -33,7 +32,6 @@ public class WalletUserService
             return null;
         }
 
-        // Validate updated user data
         ValidateUser(updatedUser);
 
         user.UserName = updatedUser.UserName;
@@ -53,7 +51,6 @@ public class WalletUserService
             return null;
         }
 
-        // Validate new pin code
         if (string.IsNullOrWhiteSpace(newPin))
         {
             throw new ArgumentException("Pin code cannot be empty.");
@@ -116,7 +113,6 @@ public class WalletUserService
 
     private void ValidateUser(TblWalletUser user)
     {
-        // Validate MobileNumber
         if (string.IsNullOrWhiteSpace(user.MobileNumber))
         {
             throw new ArgumentException("Mobile number cannot be empty.");
@@ -127,7 +123,6 @@ public class WalletUserService
             throw new ArgumentException("Invalid mobile number format.");
         }
 
-        // Validate UserName
         if (string.IsNullOrWhiteSpace(user.UserName))
         {
             throw new ArgumentException("User name cannot be empty.");
@@ -138,7 +133,6 @@ public class WalletUserService
             throw new ArgumentException("User name cannot be more than 100 characters.");
         }
 
-        // Validate PinCode
         if (string.IsNullOrWhiteSpace(user.PinCode))
         {
             throw new ArgumentException("Pin code cannot be empty.");
@@ -149,7 +143,6 @@ public class WalletUserService
             throw new ArgumentException("Pin code must be exactly 6 characters.");
         }
 
-        // Validate Balance
         if (user.Balance.HasValue && user.Balance.Value < 0)
         {
             throw new ArgumentException("Balance cannot be negative.");
