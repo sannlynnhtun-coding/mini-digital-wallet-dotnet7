@@ -7,7 +7,7 @@ namespace MiniDigitalWallet.Api.Endpoints.WalletUser;
 
 [ApiController]
 [Route("api/[controller]")]
-public class WalletUsersController : ControllerBase
+public class WalletUsersController : BaseController
 {
     private readonly WalletUserService _service;
 
@@ -83,8 +83,21 @@ public class WalletUsersController : ControllerBase
     {
         try
         {
-            await _service.TransferAsync(requestModel.SenderId, requestModel.ReceiverId, requestModel.Amount);
-            return NoContent();
+            var model = await _service.TransferAsync(requestModel.SenderId, requestModel.ReceiverId, requestModel.Amount);
+            var model2 = await _service.TransferAsync2(requestModel.SenderId, requestModel.ReceiverId, requestModel.Amount);
+
+            //await Task.WhenAll(model, model2);
+
+            //if (model.Response.RespType == EnumRespType.ValidationError) 
+            //    return BadRequest(model);
+
+            //if (model.Response.RespType == EnumRespType.SystemError)
+            //    return StatusCode(500, model);
+
+            //return Ok(model);
+
+            //return Execute(model);
+            return Execute(model2);
         }
         catch (ArgumentException ex)
         {
