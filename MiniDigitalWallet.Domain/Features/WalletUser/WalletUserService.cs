@@ -16,244 +16,275 @@ public class WalletUserService
         _db = context;
     }
 
-    public async Task<TblWalletUser> RegisterAsync(TblWalletUser newUser)
+    public async Task<Result<TblWalletUser>> RegisterAsync(TblWalletUser newUser)
     {
-        ValidateUser(newUser);
+        try
+        {
+            var validationResult = ValidateUser(newUser);
+            if (!validationResult.IsSuccess)
+                return Result<TblWalletUser>.ValidationError(validationResult.Message);
 
-        _db.TblWalletUsers.Add(newUser);
-        await _db.SaveChangesAsync();
-        return newUser;
+            _db.TblWalletUsers.Add(newUser);
+            await _db.SaveChangesAsync();
+            return Result<TblWalletUser>.Success(newUser, "User registered successfully.");
+        }
+        catch (Exception ex)
+        {
+            return Result<TblWalletUser>.SystemError(ex.Message);
+        }
     }
 
-    public async Task<TblWalletUser?> UpdateProfileAsync(int id, TblWalletUser updatedUser)
+    public async Task<Result<TblWalletUser>> UpdateProfileAsync(int id, TblWalletUser updatedUser)
     {
-        var user = await _db.TblWalletUsers.FirstOrDefaultAsync(u => u.UserId == id);
-        if (user == null)
+        try
         {
-            return null;
+            var user = await _db.TblWalletUsers.FirstOrDefaultAsync(u => u.UserId == id);
+            if (user == null)
+                return Result<TblWalletUser>.ValidationError("User not found.");
+
+            var validationResult = ValidateUser(updatedUser);
+            if (!validationResult.IsSuccess)
+                return Result<TblWalletUser>.ValidationError(validationResult.Message);
+
+            user.UserName = updatedUser.UserName;
+            user.MobileNumber = updatedUser.MobileNumber;
+            user.Balance = updatedUser.Balance;
+            user.Status = updatedUser.Status;
+
+            await _db.SaveChangesAsync();
+            return Result<TblWalletUser>.Success(user, "Profile updated successfully.");
         }
-
-        ValidateUser(updatedUser);
-
-        user.UserName = updatedUser.UserName;
-        user.MobileNumber = updatedUser.MobileNumber;
-        user.Balance = updatedUser.Balance;
-        user.Status = updatedUser.Status;
-
-        await _db.SaveChangesAsync();
-        return user;
+        catch (Exception ex)
+        {
+            return Result<TblWalletUser>.SystemError(ex.Message);
+        }
     }
 
-    public async Task<TblWalletUser?> ChangePinAsync(int id, string newPin)
+    public async Task<Result<TblWalletUser>> ChangePinAsync(int id, string newPin)
     {
-        var user = await _db.TblWalletUsers.FirstOrDefaultAsync(u => u.UserId == id);
-        if (user == null)
+        try
         {
-            return null;
-        }
+            var user = await _db.TblWalletUsers.FirstOrDefaultAsync(u => u.UserId == id);
+            if (user == null)
+                return Result<TblWalletUser>.ValidationError("User not found.");
 
-        if (string.IsNullOrWhiteSpace(newPin))
+            if (string.IsNullOrWhiteSpace(newPin))
+                return Result<TblWalletUser>.ValidationError("Pin code cannot be empty.");
+
+            if (newPin.Length != 6)
+                return Result<TblWalletUser>.ValidationError("Pin code must be exactly 6 characters.");
+
+            user.PinCode = newPin;
+            await _db.SaveChangesAsync();
+            return Result<TblWalletUser>.Success(user, "Pin code changed successfully.");
+        }
+        catch (Exception ex)
         {
-            throw new ArgumentException("Pin code cannot be empty.");
+            return Result<TblWalletUser>.SystemError(ex.Message);
         }
-
-        if (newPin.Length != 6)
-        {
-            throw new ArgumentException("Pin code must be exactly 6 characters.");
-        }
-
-        user.PinCode = newPin;
-        await _db.SaveChangesAsync();
-        return user;
     }
 
-    public async Task<TblWalletUser?> GetUserAsync(int id)
+    public async Task<Result<TblWalletUser>> GetUserAsync(int id)
     {
-        return await _db.TblWalletUsers.FirstOrDefaultAsync(u => u.UserId == id);
+        try
+        {
+            var user = await _db.TblWalletUsers.FirstOrDefaultAsync(u => u.UserId == id);
+            if (user == null)
+                return Result<TblWalletUser>.ValidationError("User not found.");
+
+            return Result<TblWalletUser>.Success(user, "User retrieved successfully.");
+        }
+        catch (Exception ex)
+        {
+            return Result<TblWalletUser>.SystemError(ex.Message);
+        }
     }
 
-    public async Task<TransferResponseModel> TransferAsync(int senderId, int receiverId, decimal amount)
+    public async Task<Result<TransferResponseModel>> TransferAsync(int senderId, int receiverId, decimal amount)
     {
-        TransferResponseModel model = new TransferResponseModel();
-
-        var sender = await _db.TblWalletUsers.FirstOrDefaultAsync(u => u.UserId == senderId);
-        var receiver = await _db.TblWalletUsers.FirstOrDefaultAsync(u => u.UserId == receiverId);
-
-        if (sender == null || receiver == null)
+        try
         {
-            //throw new ArgumentException("Sender or receiver not found.");
-            model.Response = BaseResponseModel.ValidationError("999", "Sender or receiver not found.");
-            goto Result;
+            var sender = await _db.TblWalletUsers.FirstOrDefaultAsync(u => u.UserId == senderId);
+            var receiver = await _db.TblWalletUsers.FirstOrDefaultAsync(u => u.UserId == receiverId);
+
+            if (sender == null || receiver == null)
+                return Result<TransferResponseModel>.ValidationError("Sender or receiver not found.");
+
+            if (sender.Balance < amount)
+                return Result<TransferResponseModel>.ValidationError("Insufficient balance.");
+
+            sender.Balance -= amount;
+            receiver.Balance += amount;
+
+            var transaction = new TblTransaction
+            {
+                SenderUserId = senderId,
+                ReceiverUserId = receiverId,
+                Amount = amount,
+                TransactionDate = DateTime.Now,
+                TransactionType = "Transfer"
+            };
+
+            _db.TblTransactions.Add(transaction);
+            await _db.SaveChangesAsync();
+
+            var responseModel = new TransferResponseModel
+            {
+                Transaction = transaction,
+                Response = BaseResponseModel.Success("000", "Success.")
+            };
+
+            return Result<TransferResponseModel>.Success(responseModel, "Transfer completed successfully.");
         }
-
-        if (sender.Balance < amount)
+        catch (Exception ex)
         {
-            //throw new ArgumentException("Insufficient balance.");
-            model.Response = BaseResponseModel.ValidationError("999", "Insufficient balance.");
-            goto Result;
+            return Result<TransferResponseModel>.SystemError(ex.Message);
         }
-
-        sender.Balance -= amount;
-        receiver.Balance += amount;
-
-        var transaction = new TblTransaction
-        {
-            SenderUserId = senderId,
-            ReceiverUserId = receiverId,
-            Amount = amount,
-            TransactionDate = DateTime.Now,
-            TransactionType = "Transfer"
-        };
-
-        _db.TblTransactions.Add(transaction);
-        await _db.SaveChangesAsync();
-
-        model.Transaction = transaction;
-        model.Response = BaseResponseModel.Success("000", "Success.");
-
-    Result:
-        return model;
     }
 
     public async Task<Result<ResultTransferResponseModel>> TransferAsync2(int senderId, int receiverId, decimal amount)
     {
-        Result<ResultTransferResponseModel> model = new Result<ResultTransferResponseModel>();
-
-        var sender = await _db.TblWalletUsers.FirstOrDefaultAsync(u => u.UserId == senderId);
-        var receiver = await _db.TblWalletUsers.FirstOrDefaultAsync(u => u.UserId == receiverId);
-
-        if (sender == null || receiver == null)
+        try
         {
-            //throw new ArgumentException("Sender or receiver not found.");
-            model = Result<ResultTransferResponseModel>.ValidationError("Sender or receiver not found.");
-            goto Result;
+            var sender = await _db.TblWalletUsers.FirstOrDefaultAsync(u => u.UserId == senderId);
+            var receiver = await _db.TblWalletUsers.FirstOrDefaultAsync(u => u.UserId == receiverId);
+
+            if (sender == null || receiver == null)
+                return Result<ResultTransferResponseModel>.ValidationError("Sender or receiver not found.");
+
+            if (sender.Balance < amount)
+                return Result<ResultTransferResponseModel>.ValidationError("Insufficient balance.");
+
+            sender.Balance -= amount;
+            receiver.Balance += amount;
+
+            var transaction = new TblTransaction
+            {
+                SenderUserId = senderId,
+                ReceiverUserId = receiverId,
+                Amount = amount,
+                TransactionDate = DateTime.Now,
+                TransactionType = "Transfer"
+            };
+
+            await _db.TblTransactions.AddAsync(transaction);
+            await _db.SaveChangesAsync();
+
+            var item = new ResultTransferResponseModel
+            {
+                Transaction = transaction
+            };
+
+            return Result<ResultTransferResponseModel>.Success(item, "Transfer completed successfully.");
         }
-
-        if (sender.Balance < amount)
+        catch (Exception ex)
         {
-            //throw new ArgumentException("Insufficient balance.");
-            model = Result<ResultTransferResponseModel>.ValidationError("Insufficient balance.");
-            goto Result;
+            return Result<ResultTransferResponseModel>.SystemError(ex.Message);
         }
-
-        sender.Balance -= amount;
-        receiver.Balance += amount;
-
-        var transaction = new TblTransaction
-        {
-            SenderUserId = senderId,
-            ReceiverUserId = receiverId,
-            Amount = amount,
-            TransactionDate = DateTime.Now,
-            TransactionType = "Transfer"
-        };
-
-        await _db.TblTransactions.AddAsync(transaction);
-        await _db.SaveChangesAsync();
-
-        ResultTransferResponseModel item = new ResultTransferResponseModel()
-        {
-            Transaction = transaction
-        };
-        model = Result<ResultTransferResponseModel>.Success(item, "Success.");
-
-    Result:
-        return model;
     }
 
-    public async Task<PaginationModel<TblTransaction>> GetTransactionHistoryAsync(int userId, int pageNo, int pageSize)
+    public async Task<Result<PaginationModel<TblTransaction>>> GetTransactionHistoryAsync(int userId, int pageNo, int pageSize)
     {
-        var transactions = _db.TblTransactions
-            .Where(t => t.SenderUserId == userId || t.ReceiverUserId == userId)
-            .OrderByDescending(t => t.TransactionDate);
+        try
+        {
+            var transactions = _db.TblTransactions
+                .Where(t => t.SenderUserId == userId || t.ReceiverUserId == userId)
+                .OrderByDescending(t => t.TransactionDate);
 
-        return await PaginationModel<TblTransaction>.CreateAsync(transactions.AsNoTracking(), pageNo, pageSize);
+            var pagedTransactions = await PaginationModel<TblTransaction>.CreateAsync(transactions.AsNoTracking(), pageNo, pageSize);
+
+            return Result<PaginationModel<TblTransaction>>.Success(pagedTransactions, "Transaction history retrieved successfully.");
+        }
+        catch (Exception ex)
+        {
+            return Result<PaginationModel<TblTransaction>>.SystemError(ex.Message);
+        }
     }
 
-    public async Task WithdrawAsync(int userId, decimal amount)
+    public async Task<Result<WithdrawResponseModel>> WithdrawAsync(int userId, decimal amount)
     {
-        var user = await _db.TblWalletUsers.FirstOrDefaultAsync(u => u.UserId == userId);
-        if (user == null)
+        try
         {
-            throw new ArgumentException("User not found.");
+            var user = await _db.TblWalletUsers.FirstOrDefaultAsync(u => u.UserId == userId);
+            if (user == null)
+                return Result<WithdrawResponseModel>.ValidationError("User not found.");
+
+            if (user.Balance < amount)
+                return Result<WithdrawResponseModel>.ValidationError("Insufficient balance.");
+
+            user.Balance -= amount;
+
+            var transaction = new TblTransaction
+            {
+                SenderUserId = userId,
+                Amount = amount,
+                TransactionDate = DateTime.Now,
+                TransactionType = "Withdraw"
+            };
+
+            _db.TblTransactions.Add(transaction);
+            await _db.SaveChangesAsync();
+
+            return Result<WithdrawResponseModel>.Success("Withdraw completed successfully.");
         }
-
-        if (user.Balance < amount)
+        catch (Exception ex)
         {
-            throw new ArgumentException("Insufficient balance.");
+            return Result<WithdrawResponseModel>.SystemError(ex.Message);
         }
-
-        user.Balance -= amount;
-
-        var transaction = new TblTransaction
-        {
-            SenderUserId = userId,
-            Amount = amount,
-            TransactionDate = DateTime.Now,
-            TransactionType = "Withdraw"
-        };
-
-        _db.TblTransactions.Add(transaction);
-        await _db.SaveChangesAsync();
     }
 
-    public async Task DepositAsync(int userId, decimal amount)
+    public async Task<Result<DepositResponseModel>> DepositAsync(int userId, decimal amount)
     {
-        var user = await _db.TblWalletUsers.FirstOrDefaultAsync(u => u.UserId == userId);
-        if (user == null)
+        try
         {
-            throw new ArgumentException("User not found.");
+            var user = await _db.TblWalletUsers.FirstOrDefaultAsync(u => u.UserId == userId);
+            if (user == null)
+                return Result<DepositResponseModel>.ValidationError("User not found.");
+
+            user.Balance += amount;
+
+            var transaction = new TblTransaction
+            {
+                ReceiverUserId = userId,
+                Amount = amount,
+                TransactionDate = DateTime.Now,
+                TransactionType = "Deposit"
+            };
+
+            _db.TblTransactions.Add(transaction);
+            await _db.SaveChangesAsync();
+
+            return Result<DepositResponseModel>.Success("Deposit completed successfully.");
         }
-
-        user.Balance += amount;
-
-        var transaction = new TblTransaction
+        catch (Exception ex)
         {
-            ReceiverUserId = userId,
-            Amount = amount,
-            TransactionDate = DateTime.Now,
-            TransactionType = "Deposit"
-        };
-
-        _db.TblTransactions.Add(transaction);
-        await _db.SaveChangesAsync();
+            return Result<DepositResponseModel>.SystemError(ex.Message);
+        }
     }
 
-    private void ValidateUser(TblWalletUser user)
+    private Result<ValidateUserResponseModel> ValidateUser(TblWalletUser user)
     {
         if (string.IsNullOrWhiteSpace(user.MobileNumber))
-        {
-            throw new ArgumentException("Mobile number cannot be empty.");
-        }
+            return Result<ValidateUserResponseModel>.ValidationError("Mobile number cannot be empty.");
 
         if (!System.Text.RegularExpressions.Regex.IsMatch(user.MobileNumber, @"^\+?[1-9]\d{1,14}$"))
-        {
-            throw new ArgumentException("Invalid mobile number format.");
-        }
+            return Result<ValidateUserResponseModel>.ValidationError("Invalid mobile number format.");
 
         if (string.IsNullOrWhiteSpace(user.UserName))
-        {
-            throw new ArgumentException("User name cannot be empty.");
-        }
+            return Result<ValidateUserResponseModel>.ValidationError("User name cannot be empty.");
 
         if (user.UserName.Length > 100)
-        {
-            throw new ArgumentException("User name cannot be more than 100 characters.");
-        }
+            return Result<ValidateUserResponseModel>.ValidationError("User name cannot be more than 100 characters.");
 
         if (string.IsNullOrWhiteSpace(user.PinCode))
-        {
-            throw new ArgumentException("Pin code cannot be empty.");
-        }
+            return Result<ValidateUserResponseModel>.ValidationError("Pin code cannot be empty.");
 
         if (user.PinCode.Length != 6)
-        {
-            throw new ArgumentException("Pin code must be exactly 6 characters.");
-        }
+            return Result<ValidateUserResponseModel>.ValidationError("Pin code must be exactly 6 characters.");
 
         if (user.Balance.HasValue && user.Balance.Value < 0)
-        {
-            throw new ArgumentException("Balance cannot be negative.");
-        }
+            return Result<ValidateUserResponseModel>.ValidationError("Balance cannot be negative.");
+
+        return Result<ValidateUserResponseModel>.Success();
     }
 }
