@@ -16,6 +16,4 @@ public partial class TblWalletUser
     public decimal? Balance { get; set; }
 
     public string? Status { get; set; }
-
-    public virtual ICollection<TblTransaction> TblTransactions { get; set; } = new List<TblTransaction>();
 }

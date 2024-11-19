@@ -19,6 +19,10 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<TblWalletUser> TblWalletUsers { get; set; }
 
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
+        => optionsBuilder.UseSqlServer("Server=.;Database=MiniDigitalWalletDb;User Id=sa;Password=sasa@123;TrustServerCertificate=True;");
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<TblTransaction>(entity =>
@@ -34,10 +38,6 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.TransactionType)
                 .HasMaxLength(10)
                 .IsUnicode(false);
-
-            entity.HasOne(d => d.SenderUser).WithMany(p => p.TblTransactions)
-                .HasForeignKey(d => d.SenderUserId)
-                .HasConstraintName("FK__Tbl_Trans__Sende__3B75D760");
         });
 
         modelBuilder.Entity<TblWalletUser>(entity =>
