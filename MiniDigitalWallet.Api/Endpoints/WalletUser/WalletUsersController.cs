@@ -19,125 +19,56 @@ public class WalletUsersController : BaseController
     [HttpPost("Register")]
     public async Task<IActionResult> Register([FromBody] TblWalletUser newUser)
     {
-        try
-        {
-            var user = await _service.RegisterAsync(newUser);
-            return CreatedAtAction(nameof(GetUser), new { id = user.UserId }, user);
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        var result = await _service.RegisterAsync(newUser);
+        return Execute(result);
     }
 
     [HttpPatch("UpdateProfile/{id}")]
     public async Task<IActionResult> UpdateProfile(int id, [FromBody] TblWalletUser updatedUser)
     {
-        try
-        {
-            var user = await _service.UpdateProfileAsync(id, updatedUser);
-            if (user == null)
-            {
-                return NotFound();
-            }
-            return NoContent();
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        var result = await _service.UpdateProfileAsync(id, updatedUser);
+        return Execute(result);
     }
 
     [HttpPatch("ChangePin/{id}")]
     public async Task<IActionResult> ChangePin(int id, [FromBody] string newPin)
     {
-        try
-        {
-            var user = await _service.ChangePinAsync(id, newPin);
-            if (user == null)
-            {
-                return NotFound();
-            }
-            return NoContent();
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        var result = await _service.ChangePinAsync(id, newPin);
+        return Execute(result);
     }
 
     [HttpGet("{id}")]
     public async Task<IActionResult> GetUser(int id)
     {
-        var user = await _service.GetUserAsync(id);
-        if (user == null)
-        {
-            return NotFound();
-        }
-
-        return Ok(user);
+        var result = await _service.GetUserAsync(id);
+        return Execute(result);
     }
 
     [HttpPost("Transfer")]
     public async Task<IActionResult> Transfer([FromBody] TransferRequestModel requestModel)
     {
-        try
-        {
-            var model = await _service.TransferAsync(requestModel.SenderId, requestModel.ReceiverId, requestModel.Amount);
-            var model2 = await _service.TransferAsync2(requestModel.SenderId, requestModel.ReceiverId, requestModel.Amount);
-
-            //await Task.WhenAll(model, model2);
-
-            //if (model.Response.RespType == EnumRespType.ValidationError) 
-            //    return BadRequest(model);
-
-            //if (model.Response.RespType == EnumRespType.SystemError)
-            //    return StatusCode(500, model);
-
-            //return Ok(model);
-
-            //return Execute(model);
-            return Execute(model2);
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        var result = await _service.TransferAsync(requestModel.SenderId, requestModel.ReceiverId, requestModel.Amount);
+        return Execute(result);
     }
 
     [HttpGet("TransactionHistory/{userId}")]
     public async Task<IActionResult> TransactionHistory(int userId, int pageNo = 1, int pageSize = 10)
     {
-        var transactions = await _service.GetTransactionHistoryAsync(userId, pageNo, pageSize);
-        return Ok(transactions);
+        var result = await _service.GetTransactionHistoryAsync(userId, pageNo, pageSize);
+        return Execute(result);
     }
 
     [HttpPost("Withdraw")]
     public async Task<IActionResult> Withdraw([FromBody] TransactionRequestModel requestModel)
     {
-        try
-        {
-            await _service.WithdrawAsync(requestModel.UserId, requestModel.Amount);
-            return NoContent();
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        var result = await _service.WithdrawAsync(requestModel.UserId, requestModel.Amount);
+        return Execute(result);
     }
 
     [HttpPost("Deposit")]
-    public async Task<IActionResult> Deposit([FromBody] TransactionRequestModel requestModelrequest)
+    public async Task<IActionResult> Deposit([FromBody] TransactionRequestModel requestModel)
     {
-        try
-        {
-            await _service.DepositAsync(requestModelrequest.UserId, requestModelrequest.Amount);
-            return NoContent();
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        var result = await _service.DepositAsync(requestModel.UserId, requestModel.Amount);
+        return Execute(result);
     }
-
 }
