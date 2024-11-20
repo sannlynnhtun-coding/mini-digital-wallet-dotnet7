@@ -1,4 +1,6 @@
-﻿namespace MiniDigitalWallet.Domain.Features.Wallet;
+﻿using MiniDigitalWallet.Domain.Features.Transfer;
+
+namespace MiniDigitalWallet.Domain.Features.Wallet;
 
 public class WalletService
 {
@@ -18,7 +20,7 @@ public class WalletService
                 return Result<TblWalletUser>.ValidationError(validationResult.Message);
 
             _db.TblWalletUsers.Add(newUser);
-            await _db.SaveChangesAsync();
+            await _db.SaveAndDetachAsync();
             return Result<TblWalletUser>.Success(newUser, "User registered successfully.");
         }
         catch (Exception ex)
@@ -44,7 +46,7 @@ public class WalletService
             user.Balance = updatedUser.Balance;
             user.Status = updatedUser.Status;
 
-            await _db.SaveChangesAsync();
+            await _db.SaveAndDetachAsync();
             return Result<TblWalletUser>.Success(user, "Profile updated successfully.");
         }
         catch (Exception ex)
@@ -68,7 +70,7 @@ public class WalletService
                 return Result<TblWalletUser>.ValidationError("Pin code must be exactly 6 characters.");
 
             user.PinCode = newPin;
-            await _db.SaveChangesAsync();
+            await _db.SaveAndDetachAsync();
             return Result<TblWalletUser>.Success(user, "Pin code changed successfully.");
         }
         catch (Exception ex)
@@ -119,7 +121,7 @@ public class WalletService
             };
 
             _db.TblTransactions.Add(transaction);
-            await _db.SaveChangesAsync();
+            await _db.SaveAndDetachAsync();
 
             var responseModel = new TransferResponseModel
             {
@@ -161,7 +163,7 @@ public class WalletService
             };
 
             await _db.TblTransactions.AddAsync(transaction);
-            await _db.SaveChangesAsync();
+            await _db.SaveAndDetachAsync();
 
             var item = new ResultTransferResponseModel
             {
@@ -216,7 +218,7 @@ public class WalletService
             };
 
             _db.TblTransactions.Add(transaction);
-            await _db.SaveChangesAsync();
+            await _db.SaveAndDetachAsync();
 
             return Result<WithdrawResponseModel>.Success("Withdraw completed successfully.");
         }
@@ -245,7 +247,7 @@ public class WalletService
             };
 
             _db.TblTransactions.Add(transaction);
-            await _db.SaveChangesAsync();
+            await _db.SaveAndDetachAsync();
 
             return Result<DepositResponseModel>.Success("Deposit completed successfully.");
         }
