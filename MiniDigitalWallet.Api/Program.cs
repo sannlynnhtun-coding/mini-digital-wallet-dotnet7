@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using MiniDigitalWallet.Database.AppDbContextModels;
+using MiniDigitalWallet.Domain.Features;
 using MiniDigitalWallet.Domain.Features.Wallet;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,6 +10,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DbConnection")));
 
 builder.Services.AddScoped<WalletService>();
+
+builder.Services.AddDomain();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
