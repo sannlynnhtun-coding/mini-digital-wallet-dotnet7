@@ -1,4 +1,4 @@
-﻿namespace MiniDigitalWallet.Domain.Models;
+﻿namespace MiniDigitalWallet.Domain.Features.Transfer;
 
 public class TransferResponseModel
 {
