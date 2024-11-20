@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using MiniDigitalWallet.Database.AppDbContextModels;
+using MiniDigitalWallet.Domain.Features.Transfer;
 using MiniDigitalWallet.Domain.Features.Wallet;
 using MiniDigitalWallet.Domain.Models;
 
