@@ -48,7 +48,7 @@ public class RegisterService
             };
 
             await _db.TblWalletUsers.AddAsync(item);
-            await _db.SaveChangesAsync();
+            await _db.SaveAndDetachAsync();
             
             #endregion
             
