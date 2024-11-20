@@ -1,17 +1,17 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using MiniDigitalWallet.Database.AppDbContextModels;
-using MiniDigitalWallet.Domain.Features.WalletUser;
+using MiniDigitalWallet.Domain.Features.Wallet;
 using MiniDigitalWallet.Domain.Models;
 
-namespace MiniDigitalWallet.Api.Endpoints.WalletUser;
+namespace MiniDigitalWallet.Api.Endpoints.Wallet;
 
 [ApiController]
 [Route("api/[controller]")]
-public class WalletUsersController : BaseController
+public class WalletController : BaseController
 {
-    private readonly WalletUserService _service;
+    private readonly WalletService _service;
 
-    public WalletUsersController(WalletUserService service)
+    public WalletController(WalletService service)
     {
         _service = service;
     }

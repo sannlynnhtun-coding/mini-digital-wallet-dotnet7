@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using MiniDigitalWallet.Domain;
 using MiniDigitalWallet.Domain.Models;
 using Newtonsoft.Json;
