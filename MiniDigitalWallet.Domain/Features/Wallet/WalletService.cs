@@ -1,17 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
-using MiniDigitalWallet.Database.AppDbContextModels;
-using MiniDigitalWallet.Domain.Models;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
+﻿namespace MiniDigitalWallet.Domain.Features.Wallet;
 
-namespace MiniDigitalWallet.Domain.Features.WalletUser;
-
-public class WalletUserService
+public class WalletService
 {
     private readonly AppDbContext _db;
 
-    public WalletUserService(AppDbContext context)
+    public WalletService(AppDbContext context)
     {
         _db = context;
     }

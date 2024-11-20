@@ -1,6 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-
-namespace MiniDigitalWallet.Domain.Features;
+﻿namespace MiniDigitalWallet.Domain.Models;
 
 public class PaginationModel<T> : List<T>
 {
