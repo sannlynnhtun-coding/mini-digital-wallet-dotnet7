@@ -17,4 +17,15 @@ public static class Extensions
 
         return Result<TResponse>.Success();
     }
+    
+    public static async Task<int> SaveAndDetachAsync(this DbContext db)
+    {
+        var res = await db.SaveChangesAsync();
+        foreach (var entry in db.ChangeTracker.Entries().ToArray())
+        {
+            entry.State = EntityState.Detached;
+        }
+
+        return res;
+    }
 }
