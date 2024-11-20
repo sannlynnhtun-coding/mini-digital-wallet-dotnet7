@@ -1,5 +1,5 @@
 ﻿namespace MiniDigitalWallet.Domain.Models;
 
-public class WithdrawResponseModel
+public abstract class WithdrawResponseModel
 {
 }

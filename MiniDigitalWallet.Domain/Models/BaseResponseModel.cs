@@ -41,13 +41,3 @@ public class BaseResponseModel
         };
     }
 }
-
-public enum EnumRespType
-{
-    None,
-    Success,
-    Pending,
-    ValidationError,
-    SystemError
-}
-

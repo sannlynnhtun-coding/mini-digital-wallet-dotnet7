@@ -5,8 +5,3 @@ public class TransferResponseModel
     public BaseResponseModel Response { get; set; }
     public TblTransaction Transaction { get; set; } 
 }
-
-public class ResultTransferResponseModel
-{
-    public TblTransaction Transaction { get; set; }
-}

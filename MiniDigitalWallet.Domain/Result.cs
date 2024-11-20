@@ -53,4 +53,15 @@ public class Result<T>
             Type = EnumRespType.SystemError,
         };
     }
+    
+    public static Result<T> SystemError(Exception ex, T? data = default)
+    {
+        return new Result<T>()
+        {
+            IsSuccess = false,
+            Data = data,
+            Message = ex.ToString(),
+            Type = EnumRespType.SystemError,
+        };
+    }
 }
